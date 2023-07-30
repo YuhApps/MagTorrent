@@ -61,7 +61,6 @@
             try {
                 return new Date(seconds).toISOString().slice(11, 19)
             } catch (error) {
-                console.log(seconds, error)
                 return '∞'
             }
         }
@@ -140,6 +139,16 @@
             meta.innerHTML = `✓ Download complete (${getSize(length)}).`
         })
 
+        ipcRenderer.on('torrent-error', (e, infoHash, error) => {
+            let li = document.querySelector('#info-hash-' + infoHash)
+            let meta = li.querySelector('span.torrent-meta')
+            li.classList.remove('downloaded')
+            li.classList.remove('downloading')
+            li.classList.add('error')
+            li.classList.remove('stopped')
+            meta.innerHTML = `‼ Error: ${error}.`
+        })
+
         ipcRenderer.on('adding-torrent', (e) => {
             message.classList.remove('hidden')
             message.innerHTML = 'Adding torrent...'
@@ -179,7 +188,8 @@
                     ul.insertBefore(li, ul.firstChild)
                 }
                 let meta = li.querySelector('span.torrent-meta')
-                if (torrent.error && (torrent.paused || !torrent.done)) {
+                if (torrent.error !== undefined && torrent.paused) {
+                    console.log('abc')
                     li.classList.remove('downloaded')
                     li.classList.remove('downloading')
                     li.classList.add('error')
@@ -194,6 +204,7 @@
                 } else if (torrent.paused) {
                     li.classList.remove('downloaded')
                     li.classList.remove('downloading')
+                    li.classList.remove('error')
                     li.classList.add('stopped')
                     meta.innerHTML = `|| ${Math.round(torrent.progress * 100)}% of ${getSize(torrent.length)}, ${getTime(torrent.timeRemaining)} second${Math.round(torrent.timeRemaining/1000) < 2 ? '' : 's'} left. ↓ ${getSize(torrent.downloadSpeed)}/s ↑${getSize(torrent.uploadSpeed)}/s.`
                 } else if (torrent.ready) {

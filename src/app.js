@@ -38,7 +38,10 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
                 torrent.source = 'history'
                 if (paused) torrent.pause()
             })
-            if (fs.existsSync(joinPath(path, name)) === false) torrent.pause()
+            if (fs.existsSync(joinPath(path, name)) === false) {
+                torrent.error = '123'
+                torrent.pause()
+            }
         })
         if (deepLinkUrl) {
             webTorrentClient.add(deepLinkUrl, { path: downloadPath })
@@ -61,16 +64,7 @@ app.on('open-url', (e, url) => {
 })
 
 app.on('window-all-closed', () => {
-    if (interval) clearInterval(interval)
-    let torrents = webTorrentClient.torrents.map((torrent) => ({
-        name: torrent.name,
-        infoHash: torrent.infoHash,
-        magnetURI: torrent.magnetURI,
-        paused: torrent.paused,
-        path: torrent.path
-    }))
-    fs.writeFileSync(path.join(app.getPath('userData'), 'History.json'), JSON.stringify(torrents))
-    webTorrentClient.destroy((error) => app.quit())
+    finish()
 })
 
 ipcMain.on('add-torrent', (e, magnetURI) => {
@@ -97,6 +91,19 @@ ipcMain.on('open-torrent', (e, torrent) => {
 function importWebTorrent(app) {
     // app.isPackaged ? '../app.asar.unpacked/node_modules/webtorrent/index.js' : 
     return import('webtorrent')
+}
+
+function finish() {
+    if (interval) clearInterval(interval)
+    let torrents = webTorrentClient.torrents.map((torrent) => ({
+        name: torrent.name,
+        infoHash: torrent.infoHash,
+        magnetURI: torrent.magnetURI,
+        paused: torrent.paused,
+        path: torrent.path
+    }))
+    fs.writeFileSync(path.join(app.getPath('userData'), 'History.json'), JSON.stringify(torrents))
+    webTorrentClient.destroy((error) => app.quit())
 }
 
 function createAppMenu() {
@@ -251,6 +258,33 @@ function createMainWindow() {
         mainWindow.webContents.send('platform', platform, dark)
         if (interval === undefined) interval = setInterval(updateTorrents, 3000)
     })
+    mainWindow.on('close', (e) => {
+        let okayToClose = true
+        for (let torrent of webTorrentClient.torrents) {
+            console.log(torrent.done)
+            if (torrent.done === false && fs.existsSync(path.join(torrent.path, torrent.name))) {
+                okayToClose = false
+                break
+            }
+        }
+        if (okayToClose === false) {
+            let response = dialog.showMessageBoxSync(mainWindow, {
+                message: 'Some downloads are not finished',
+                detail: 'Are you sure want to quit MagTorrent? You can minize the app to hide the app window.',
+                buttons: ['Cancel', 'Minimize', 'Quit'],
+                noLink: true
+            })
+            switch (response) {
+                case 0:
+                    e.preventDefault()
+                    break
+                case 1:
+                    e.preventDefault()
+                    mainWindow.minimize()
+                    break
+            }
+        }
+    })
 }
 
 function showAboutDialog(menuItem, browserWindow, event) {
@@ -312,7 +346,7 @@ function updateTorrents() {
         name: torrent.name, infoHash: torrent.infoHash, magnetURI: torrent.magnetURI,
         timeRemaining: torrent.timeRemaining, received: torrent.received, downloaded: torrent.downloaded, uploaded: torrent.uploaded,
         downloadSpeed: torrent.downloadSpeed, uploadSpeed: torrent.uploadSpeed, progress: torrent.progress, path: torrent.path,
-        ready: torrent.ready, paused: torrent.paused, done: torrent.done, length: torrent.length,
+        ready: torrent.ready, paused: torrent.paused, done: torrent.done, length: torrent.length, source: torrent.source || 'session',
         error: fs.existsSync(path.join(torrent.path, torrent.name)) ? undefined : `Target folder/file does not exist`
     }))
     mainWindow.webContents.send('update-torrents', torrents || [])
