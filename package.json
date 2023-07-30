@@ -1,0 +1,37 @@
+{
+  "name": "magtorrent",
+  "productName": "MagTorrent",
+  "version": "0.0.1",
+  "description": "A torrent app for Desktop, based on WebTorrent and Electron.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "magnet",
+    "torrent",
+    "webtorrent"
+  ],
+  "author": "Yuh Apps",
+  "license": "ISC",
+  "build": {
+    "appId": "dev.yuhapps.magtorrent",
+    "asar": false,
+    "protocols": [
+      {
+        "name": "Magnet URL",
+        "schemes": [
+          "magnet"
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "webtorrent": "^2.1.15"
+  },
+  "devDependencies": {
+    "electron": "^25.3.2",
+    "electron-builder": "^23.6.0"
+  },
+  "postinstall": "electron-builder install-app-deps"
+}

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagTorrent</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="card">
+        <span style="width: 80px;"></span>
+        <input type="text" placeholder="Search or Magnet URL (magnet:?xt=urn:btih:). ">
+        <span style="width: 80px;"></span>
+        <!-- <span style="width: 12px;"></span>
+        <button class="option-button" title="Add Torrent" onclick="addTorrent()">
+            <svg clip-rule="evenodd" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m12.002 2c5.518 0 9.998 4.48 9.998 9.998 0 5.517-4.48 9.997-9.998 9.997-5.517 0-9.997-4.48-9.997-9.997 0-5.518 4.48-9.998 9.997-9.998zm0 1.5c-4.69 0-8.497 3.808-8.497 8.498s3.807 8.497 8.497 8.497 8.498-3.807 8.498-8.497-3.808-8.498-8.498-8.498zm-.747 7.75h-3.5c-.414 0-.75.336-.75.75s.336.75.75.75h3.5v3.5c0 .414.336.75.75.75s.75-.336.75-.75v-3.5h3.5c.414 0 .75-.336.75-.75s-.336-.75-.75-.75h-3.5v-3.5c0-.414-.336-.75-.75-.75s-.75.336-.75.75z"/></svg>
+        </button>
+        <span style="width: 8px;"></span>
+        <button class="option-button" title="Options">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m11.998 2c5.517 0 9.997 4.48 9.997 9.998 0 5.517-4.48 9.997-9.997 9.997-5.518 0-9.998-4.48-9.998-9.997 0-5.518 4.48-9.998 9.998-9.998zm0 1.5c-4.69 0-8.498 3.808-8.498 8.498s3.808 8.497 8.498 8.497 8.497-3.807 8.497-8.497-3.807-8.498-8.497-8.498zm2.502 8.495c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25zm-3.75 0c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25zm-3.75 0c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25z"/></svg>    
+        </button> -->
+    </header>
+    <main>
+        <div id="message">Loading data from previous session...</div>
+        <ul></ul>
+    </main>
+    <script>
+        const oneGB = 1024*1024*1024
+        const oneMB = 1024*1024
+        const oneKB = 1024
+        const oneHour = 3600
+        const oneMinute = 60
+        const { ipcRenderer } = require('electron')
+        const searchBox = document.querySelector('input')
+        const message = document.querySelector('#message')
+        const ul = document.querySelector('ul')
+
+        function getSize(size) {
+            if (size === undefined) {
+                return '∞B'
+            } else if (size > oneGB) {
+                let gb = String(size / oneGB)
+                let dotIndex = gb.indexOf('.')
+                return gb.substring(0, dotIndex + 3) + 'GB'
+            } else if (size > oneMB) {
+                let mb = String(size / oneMB)
+                let dotIndex = mb.indexOf('.')
+                return mb.substring(0, dotIndex + 3) + 'MB'
+            } else if (size > oneKB) {
+                let kb = String(size / oneKB)
+                let dotIndex = kb.indexOf('.')
+                return kb.substring(0, dotIndex + 3) + 'KB'
+            } else if (String(size).length > 3){
+                return String(size).substring(0, 3) + 'B'
+            } else {
+                return size + 'B'
+            }
+        }
+
+        function getTime(seconds) {
+            try {
+                return new Date(seconds).toISOString().slice(11, 19)
+            } catch (error) {
+                console.log(seconds, error)
+                return '∞'
+            }
+        }
+
+        function addTorrent() {
+            ipcRenderer.send('show-add-torrent-box')
+        }
+
+        function search(text) {
+            document.querySelectorAll('li').forEach((li) => {
+                if (li.querySelector('.torrent-name').textContent.toLowerCase().indexOf(text.toLowerCase()) > -1) {
+                    li.classList.remove('hidden')
+                } else {
+                    li.classList.add('hidden')
+                }
+            })
+        }
+
+        /*
+        document.addEventListener('DOMContentLoaded', (event) => {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark')
+            } else {
+                document.body.classList.remove('dark')
+            }
+        })
+        */
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+            if (event.matches) {
+                document.body.classList.add('dark')
+            } else {
+                document.body.classList.remove('dark')
+            }
+        })
+
+        searchBox.onkeyup = (e) => {
+            let text = e.target.value
+            if (text.startsWith('magnet:?xt=urn:btih:')) {
+                ipcRenderer.send('add-torrent', text)
+                e.target.value = ''
+            } else {
+                search(text)
+            }
+        }
+
+        ipcRenderer.on('platform', (e, platform, dark) => {
+            searchBox.placeholder += `Use ${platform === 'darwin' ? 'Cmd' : 'Ctrl'}+V to paste.`
+            if (dark) {
+                document.body.classList.add('dark')
+            } else {
+                document.body.classList.remove('dark')
+            }
+        })
+
+        ipcRenderer.on('options-menu-closed', (e) => {
+            document.querySelectorAll('li.selected').forEach((li) => li.classList.remove('selected'))
+        })
+
+        ipcRenderer.on('delete-all-torrents', (e) => {
+            ul.innerHTML = ''
+        })
+
+        ipcRenderer.on('remove-torrent', (e, infoHash) => {
+            let li = document.querySelector('#info-hash-' + infoHash)
+            if (li) ul.removeChild(li)
+        })
+
+        ipcRenderer.on('torrent-done', (e, infoHash, length) => {
+            let li = document.querySelector('#info-hash-' + infoHash)
+            let meta = li.querySelector('span.torrent-meta')
+            li.classList.add('downloaded')
+            li.classList.remove('downloading')
+            li.classList.remove('error')
+            li.classList.remove('stopped')
+            meta.innerHTML = `✓ Download complete (${getSize(length)}).`
+        })
+
+        ipcRenderer.on('adding-torrent', (e) => {
+            message.classList.remove('hidden')
+            message.innerHTML = 'Adding torrent...'
+        })
+
+        ipcRenderer.on('update-torrents', (e, torrents) => {
+            if (torrents.length === 0) {
+                message.classList.remove('hidden')
+                message.innerHTML = `There are no active transfers.<br>
+                                    To add a torrent, paste a magnet link to the<br>
+                                    search box above, or add a .torrent file.`
+            } else {
+                message.classList.add('hidden')
+            }
+            torrents.forEach((torrent) => {
+                let li = document.querySelector('#info-hash-' + torrent.infoHash)
+                if (li === undefined || li === null) {
+                    li = document.createElement('li')
+                    li.className = 'card torrent downloading'
+                    li.id = 'info-hash-' + torrent.infoHash
+                    li.setAttribute('done', torrent.done)
+                    li.innerHTML =
+                        `
+                        <div class="torrent-info">
+                            <span class="torrent-name">${torrent.name}</span>
+                            <br>
+                            <span class="torrent-meta">Getting info...</span>
+                        </div>
+                        `
+                    li.oncontextmenu = (e) => {
+                        li.classList.add('selected')
+                        ipcRenderer.send('show-torrent-options', torrent, { x: e.clientX, y: e.clientY })
+                    }
+                    li.ondblclick = (e) => {
+                        ipcRenderer.send('open-torrent', torrent)
+                    }
+                    ul.insertBefore(li, ul.firstChild)
+                }
+                let meta = li.querySelector('span.torrent-meta')
+                if (torrent.error && (torrent.paused || !torrent.done)) {
+                    li.classList.remove('downloaded')
+                    li.classList.remove('downloading')
+                    li.classList.add('error')
+                    li.classList.remove('stopped')
+                    meta.innerHTML = `‼ Error: ${torrent.error}.`
+                } else if (torrent.done) {
+                    li.classList.add('downloaded')
+                    li.classList.remove('downloading')
+                    li.classList.remove('error')
+                    li.classList.remove('stopped')
+                    meta.innerHTML = `✓ Download complete (${getSize(torrent.length)})` + ` ↑${getSize(torrent.uploadSpeed)}/s.`
+                } else if (torrent.paused) {
+                    li.classList.remove('downloaded')
+                    li.classList.remove('downloading')
+                    li.classList.add('stopped')
+                    meta.innerHTML = `|| ${Math.round(torrent.progress * 100)}% of ${getSize(torrent.length)}, ${getTime(torrent.timeRemaining)} second${Math.round(torrent.timeRemaining/1000) < 2 ? '' : 's'} left. ↓ ${getSize(torrent.downloadSpeed)}/s ↑${getSize(torrent.uploadSpeed)}/s.`
+                } else if (torrent.ready) {
+                    li.classList.remove('downloaded')
+                    li.classList.add('downloading')
+                    li.classList.remove('error')
+                    li.classList.remove('stopped')
+                    meta.innerHTML = `↕ ${Math.round(torrent.progress * 100)}% of ${getSize(torrent.length)}, ${getTime(torrent.timeRemaining)} second${Math.round(torrent.timeRemaining/1000) < 2 ? '' : 's'} left. ↓ ${getSize(torrent.downloadSpeed)}/s ↑${getSize(torrent.uploadSpeed)}/s.`
+                } else {
+                    li.classList.remove('downloaded')
+                    li.classList.add('downloading')
+                    li.classList.remove('error')
+                    li.classList.remove('stopped')
+                    meta.innerHTML = `∞ Getting info...`
+                }
+            })
+        })
+    </script>
+</body>
+</html>
