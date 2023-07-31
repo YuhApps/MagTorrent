@@ -212,6 +212,30 @@ li.torrent button svg {
     display: none !important;
 }
 
+#minimize:hover {
+    background: #FDD835;
+}
+
+#maximize:hover, #unmaximize:hover {
+    background: #00E676;
+}
+
+#close:hover {
+    background: #EF5350;
+}
+
+.dark #minimize:hover {
+    background: #FBC02D;
+}
+
+.dark #maximize:hover, .dark #unmaximize:hover {
+    background: #4CAF50;
+}
+
+.dark #close:hover {
+    background: #F44336;
+}
+
 #message {
     /* font-family: 'Montserrat'; */
     font-size: 20px;
