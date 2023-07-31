@@ -1,5 +1,6 @@
 const { app, BrowserWindow, clipboard, Menu, nativeTheme, dialog, ipcMain, Notification, shell } = require('electron')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
@@ -72,9 +73,15 @@ ipcMain.on('add-torrent', (e, magnetURI) => {
     mainWindow.webContents.send('adding-torrent')
 })
 
+ipcMain.on('show-app-options', (e, point) => {
+    createAppOptionsMenu(point)
+})
+
 ipcMain.on('show-torrent-options', (e, torrent, point) => {
     createTorrentOptionsMenu(torrent, point)
 })
+
+ipcMain.on('open-downloads-folder', (e) => shell.openPath(downloadPath))
 
 ipcMain.on('open-torrent', (e, torrent) => {
     let torrentPath = path.join(torrent.path, torrent.name)
@@ -88,13 +95,13 @@ ipcMain.on('open-torrent', (e, torrent) => {
     }
 })
 
-ipcMain.on('minimize-mw', () => mainWindow.minimize())
+ipcMain.on('minimize:main-window', () => mainWindow.minimize())
 
-ipcMain.on('maximize-mw', () => mainWindow.maximize())
+ipcMain.on('maximize:main-window', () => mainWindow.maximize())
 
-ipcMain.on('unmaximize-mw', () => mainWindow.unmaximize())
+ipcMain.on('unmaximize:main-window', () => mainWindow.unmaximize())
 
-ipcMain.on('close-mw', () => mainWindow.close())
+ipcMain.on('close:main-window', () => mainWindow.close())
 
 function importWebTorrent(app) {
     // app.isPackaged ? '../app.asar.unpacked/node_modules/webtorrent/index.js' : 
@@ -160,7 +167,11 @@ function createAppMenu() {
                 {
                     label: 'Open Downloads folder',
                     click: () => shell.openExternal('file://' + downloadPath)
-                }
+                },
+                {
+                    label: 'Select Downloads folder',
+                    click: () => shell.openExternal('file://' + downloadPath)
+                },
             ]
         },
         { role: 'editMenu' },
@@ -168,6 +179,45 @@ function createAppMenu() {
         { role: 'windowMenu' }
     ])
     Menu.setApplicationMenu(menu)
+}
+
+function createAppOptionsMenu(point) {
+    let menu = Menu.buildFromTemplate([
+        {
+            label: 'Add from Torrent file',
+            click: addTorrentFromFile,
+        },
+        {
+            type: 'separator'
+        },
+        {
+            label: 'Start all transfers',
+            click: startAllTransfers,
+        },
+        {
+            label: 'Stop all transfers',
+            click: stopAllTransfers
+        },
+        {
+            type: 'separator'
+        },
+        {
+            label: 'Open Downloads folder',
+            click: () => shell.openExternal('file://' + downloadPath)
+        },
+        {
+            label: 'Select Downloads folder',
+            click: () => shell.openExternal('file://' + downloadPath)
+        },
+        {
+            type: 'separator'
+        },
+        {
+            label: 'About MagTorrent',
+            click: showAboutDialog
+        }
+    ])
+    menu.popup(point)
 }
 
 function createTorrentOptionsMenu({ infoHash }, point) {
@@ -261,6 +311,9 @@ function createMainWindow() {
     })
     if (platform === 'darwin') {
         mainWindow.setWindowButtonPosition({ x: 12, y: 16 })
+    }
+    if (os.platform() === 'darwin' && platform !== 'darwin') {
+        mainWindow.setWindowButtonVisibility(false)
     }
     mainWindow.loadFile('src/index.html')
     mainWindow.webContents.on('did-finish-load', () => {

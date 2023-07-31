@@ -56,13 +56,24 @@ body.dark {
     --foreground: #FFFFFF;
 }
 
+body.dark.win32 {
+    --card-background: #303030;
+    --main-background: #000000;
+    --foreground: #FFFFFF;
+}
+
 header {
     align-items: center;
-    background: var(--header-background);
     display: flex;
     flex-direction: row;
     padding: 8px;
     z-index: 2;
+    -webkit-app-region: drag;
+}
+
+header span.spacer {
+    flex: 1;
+    /* min-width: 20px; */
 }
 
 header input {
@@ -70,10 +81,18 @@ header input {
     border-radius: 8px;
     background: transparent;
     color: var(--foreground);
-    flex: 1;
+    margin: 0 20px;
+    min-width: 420px;
+    max-width: 960px;
     outline: none;
     padding: 6px;
     text-align: center;
+    width: 60%;
+    -webkit-app-region: no-drag;
+}
+
+.win32 header input {
+    min-width: 400px;
 }
 
 header input:focus {
@@ -91,6 +110,7 @@ header button {
     padding: 4px;
     outline: none;
     transition-duration: .25s;
+    -webkit-app-region: no-drag;
 }
 
 header button:hover {
@@ -125,9 +145,11 @@ li.torrent {
     color: var(--foreground);
     display: flex;
     flex-direction: row;
-    margin: 20px;
+    margin: 20px auto;
+    max-width: 960px;
     overflow: hidden;
     padding: 12px;
+    width: 90%;
 }
 
 li.torrent div {
@@ -212,27 +234,35 @@ li.torrent button svg {
     display: none !important;
 }
 
-#minimize:hover {
+.win32 .options:hover {
+    background: #4FC3F7;
+}
+
+.win32 .minimize:hover {
     background: #FDD835;
 }
 
-#maximize:hover, #unmaximize:hover {
+.win32 .maximize:hover, .unmaximize:hover {
     background: #00E676;
 }
 
-#close:hover {
-    background: #EF5350;
+.win32 .close:hover {
+    background: #FF5252;
 }
 
-.dark #minimize:hover {
-    background: #FBC02D;
+.win32.dark .options:hover {
+    background: #039BE5;
 }
 
-.dark #maximize:hover, .dark #unmaximize:hover {
+.win32.dark .minimize:hover {
+    background: #F9A825;
+}
+
+.win32.dark .maximize:hover, .dark .unmaximize:hover {
     background: #4CAF50;
 }
 
-.dark #close:hover {
+.win32.dark .close:hover {
     background: #F44336;
 }
 
