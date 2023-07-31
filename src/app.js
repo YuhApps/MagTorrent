@@ -88,6 +88,14 @@ ipcMain.on('open-torrent', (e, torrent) => {
     }
 })
 
+ipcMain.on('minimize-mw', () => mainWindow.minimize())
+
+ipcMain.on('maximize-mw', () => mainWindow.maximize())
+
+ipcMain.on('unmaximize-mw', () => mainWindow.unmaximize())
+
+ipcMain.on('close-mw', () => mainWindow.close())
+
 function importWebTorrent(app) {
     // app.isPackaged ? '../app.asar.unpacked/node_modules/webtorrent/index.js' : 
     return import('webtorrent')
@@ -123,6 +131,7 @@ function createAppMenu() {
                 { type: 'separator' },
                 {
                     label: 'Quit MagTorrent',
+                    accelerator: 'Cmd+q',
                     click: () => BrowserWindow.getAllWindows().forEach((window) => window.close())
                 }
             ]
@@ -261,7 +270,6 @@ function createMainWindow() {
     mainWindow.on('close', (e) => {
         let okayToClose = true
         for (let torrent of webTorrentClient.torrents) {
-            console.log(torrent.done)
             if (torrent.done === false && fs.existsSync(path.join(torrent.path, torrent.name))) {
                 okayToClose = false
                 break

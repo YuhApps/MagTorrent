@@ -99,6 +99,7 @@ header button:hover {
 
 header button svg {
     display: block;
+    fill: var(--foreground);
     height: 24px;
     width: 24px;
 }
