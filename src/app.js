@@ -11,6 +11,7 @@ let downloadPath
 let mainWindow
 let interval
 let deepLinkUrl
+let settings
 
 if (app.requestSingleInstanceLock()) {
     app.on('second-instance', (e, argv, workingDir, data) => {
@@ -27,7 +28,16 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     webTorrentClient = new WebTorrent.default()
     webTorrentClient.on('torrent', onTorrent)
     webTorrentClient.on('error', onError)
-    downloadPath = app.getPath('downloads') + path.sep + 'MagTorrent'
+    if (fs.existsSync(path.join(app.getPath('userData'), 'Settings.json'))) {
+        settings = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'Settings.json')))
+    } else {
+        settings = {
+            'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
+            'torrent_done_notification': 'silent',
+            'torrent_done_sound': true,
+        }
+    }
+    downloadPath = settings['download_path']
     if (fs.existsSync(downloadPath) === false) {
         fs.mkdirSync(downloadPath)
     }
@@ -81,7 +91,12 @@ ipcMain.on('show-torrent-options', (e, torrent, point) => {
     createTorrentOptionsMenu(torrent, point)
 })
 
-ipcMain.on('open-downloads-folder', (e) => shell.openPath(downloadPath))
+ipcMain.on('open-downloads-folder', (e) => {
+    if (fs.existsSync(downloadPath) === false) {
+        fs.mkdirSync(downloadPath)
+    }
+    shell.openPath(downloadPath)
+})
 
 ipcMain.on('open-torrent', (e, torrent) => {
     let torrentPath = path.join(torrent.path, torrent.name)
@@ -118,6 +133,7 @@ function finish() {
         path: torrent.path
     }))
     fs.writeFileSync(path.join(app.getPath('userData'), 'History.json'), JSON.stringify(torrents))
+    fs.writeFileSync(path.join(app.getPath('userData'), 'Settings.json'), JSON.stringify(settings))
     webTorrentClient.destroy((error) => app.quit())
 }
 
@@ -128,6 +144,11 @@ function createAppMenu() {
                 {
                     label: 'About MagTorrent',
                     click: showAboutDialog
+                },
+                { type: 'separator' },
+                {
+                    label: 'Set Download folder',
+                    click: setDownloadFolder,
                 },
                 { type: 'separator' },
                 { role: 'services' },
@@ -150,9 +171,7 @@ function createAppMenu() {
                     label: 'Add from Torrent file',
                     click: addTorrentFromFile,
                 },
-                {
-                    type: 'separator'
-                },
+                { type: 'separator' },
                 {
                     label: 'Start all transfers',
                     click: startAllTransfers,
@@ -160,17 +179,6 @@ function createAppMenu() {
                 {
                     label: 'Stop all transfers',
                     click: stopAllTransfers
-                },
-                {
-                    type: 'separator'
-                },
-                {
-                    label: 'Open Downloads folder',
-                    click: () => shell.openExternal('file://' + downloadPath)
-                },
-                {
-                    label: 'Select Downloads folder',
-                    click: () => shell.openExternal('file://' + downloadPath)
                 },
             ]
         },
@@ -202,12 +210,8 @@ function createAppOptionsMenu(point) {
             type: 'separator'
         },
         {
-            label: 'Open Downloads folder',
-            click: () => shell.openExternal('file://' + downloadPath)
-        },
-        {
-            label: 'Select Downloads folder',
-            click: () => shell.openExternal('file://' + downloadPath)
+            label: 'Set Download folder',
+            click: setDownloadFolder,
         },
         {
             type: 'separator'
@@ -315,7 +319,7 @@ function createMainWindow() {
     if (os.platform() === 'darwin' && platform !== 'darwin') {
         mainWindow.setWindowButtonVisibility(false)
     }
-    mainWindow.loadFile('src/index.html')
+    mainWindow.loadFile('src/view/index.html')
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('platform', platform, dark)
         if (interval === undefined) interval = setInterval(updateTorrents, 3000)
@@ -356,14 +360,18 @@ function showAboutDialog(menuItem, browserWindow, event) {
     })
 }
 
-function addTorrentFromURL(menuItem, browserWindow, event) {
-    sampleItems.forEach((item) => {
-        webTorrentClient.add(item, { path: downloadPath })
-    })
-}
-
 function addTorrentFromFile(menuItem, browserWindow, event) {
 
+}
+
+function setDownloadFolder(menuItem, browserWindow, event) {
+    dialog.showOpenDialog(browserWindow, {
+        defaultPath: downloadPath,
+        properties: ['createDirectory', 'openDirectory']
+    }).then(({ canceled, filePaths }) => {
+        if (canceled || filePaths.length === 0) return
+        downloadPath = filePaths[0]
+    })
 }
 
 function startAllTransfers(menuItem, browserWindow, event) {
