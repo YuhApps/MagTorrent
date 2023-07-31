@@ -27,6 +27,7 @@
     ]
   },
   "dependencies": {
+    "electron-fetch": "^1.9.1",
     "sound-play": "^1.1.0",
     "webtorrent": "^2.1.15"
   },

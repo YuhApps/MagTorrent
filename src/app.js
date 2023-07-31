@@ -1,11 +1,13 @@
 const { app, BrowserWindow, clipboard, Menu, nativeTheme, dialog, ipcMain, Notification, shell } = require('electron')
+const fetch = require('electron-fetch').default
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const soundPlay = require('sound-play')
-
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
 const sampleItems = [sintel]
+
+const VERSION_CODE = 1
 
 let webTorrentClient
 let mainWindow
@@ -33,6 +35,11 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     } else {
         settings = {
             'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
+            'last_cfu': 0,
+            'new_version': {
+                vc: VERSION_CODE,
+                vn: app.getVersion()
+            },
             'on_torrent_done': 'mag_sound', // ['nothing', 'mag_sound', 'mag_notification', 'system_notification', 'silent notification']
         }
     }
@@ -62,6 +69,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     if (app.isDefaultProtocolClient('magnet')) {
         app.setAsDefaultProtocolClient('magnet')
     }
+    checkForUpdate(Date.now())
 })
 
 app.on('open-url', (e, url) => {
@@ -529,4 +537,34 @@ function onTorrent(torrent) {
 
 function onError(error) {
     dialog.showErrorBox('Error', 'An error ocurred.\n' + error)
+}
+
+function checkForUpdate(now) {
+    if (app.isPackaged === false) return // No cfu in dev mode.
+    if (now < 1693501200000) return // No cfu until Sep 1st 2023.
+
+    const lastUpdate = settings['last_cfu']
+    const newVersion = settings['new_version']
+    if (newVersion.vc > VERSION_CODE) {
+        showUpdateDialog(newVersion)
+    } else if (now - lastUpdate > 86400000 * 7) {
+        fetch('https://yuhapps.dev/api/mtr/cfu').then((res) => res.json())
+        .then((newVersion) => {
+            settings['last_cfu'] = now
+            if (vc > VERSION_CODE) {
+                showUpdateDialog(newVersion)
+            }
+        }).catch((error) => console.log(error))
+    }
+}
+
+function showUpdateDialog(newVersion) {
+    dialog.showMessageBox({
+        message: 'Update available',
+        detail: 'There is a new update for MagTorrent (' + newVersion.vn + '). Download it now?',
+        buttons: ['Download now', 'Maybe later']
+    }).then(({ response }) => {
+        settings['new_version'] = newVersion
+        if (response === 0) shell.openExternal('https://github.com/YuhApps/MagTorrent/releases')
+    })
 }
