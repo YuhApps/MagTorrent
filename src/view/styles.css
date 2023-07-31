@@ -1,0 +1,275 @@
+@font-face {
+    font-family: 'Lato';
+    font-weight: normal;
+    src: URL('../fonts/lato_regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Lato';
+    font-weight: bold;
+    src: URL('../fonts/lato_bold.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    font-weight: normal;
+    src: URL('../fonts/montserrat_regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    font-weight: normal;
+    src: URL('../fonts/montserrat_bold.ttf') format('truetype');
+}
+
+html {
+    font-family: 'Lato';
+}
+
+body {
+    color: #000000;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    --red: #D32F2F;
+    --yellow: #FBC02D;
+    --green: #388E3C;
+    --blue: #1976D2;
+    --purple: #7B1FA2;
+    --card-background: #FFFFFF;
+    --main-background: #FFFFFF;
+    --foreground: #000000;
+}
+
+body.dark {
+    color: #FFFFFF;
+    --red: #EF9A9A;
+    --yellow: #FFF59D;
+    --green: #A5D6A7;
+    --blue: #90CAF9;
+    --purple: #CE93D8;
+    --card-background: #404040;
+    --main-background: #202020;
+    --foreground: #FFFFFF;
+}
+
+body.dark.win32 {
+    --card-background: #303030;
+    --main-background: #000000;
+    --foreground: #FFFFFF;
+}
+
+header {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    z-index: 2;
+    -webkit-app-region: drag;
+}
+
+header span.spacer {
+    flex: 1;
+    /* min-width: 20px; */
+}
+
+header input {
+    border: 2px solid #aaaaaa; 
+    border-radius: 8px;
+    background: transparent;
+    color: var(--foreground);
+    margin: 0 20px;
+    min-width: 420px;
+    max-width: 960px;
+    outline: none;
+    padding: 6px;
+    text-align: center;
+    width: 60%;
+    -webkit-app-region: no-drag;
+}
+
+.win32 header input {
+    min-width: 400px;
+}
+
+header input:focus {
+    border: 2px solid var(--foreground); 
+}
+
+header input::placeholder {
+    color: #a0a0a0;
+}
+
+header button {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 4px;
+    outline: none;
+    transition-duration: .25s;
+    -webkit-app-region: no-drag;
+}
+
+header button:hover {
+    background: #80808060;
+}
+
+header button svg {
+    display: block;
+    fill: var(--foreground);
+    height: 24px;
+    width: 24px;
+}
+
+main {
+    background: var(--main-background);
+    flex: 1;
+    height: 100%;
+    overflow-y: scroll;
+    user-select: none;
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    overflow-y: scroll;
+    padding: 0;
+}
+
+li.torrent {
+    align-items: center;
+    border-radius: 8px;
+    color: var(--foreground);
+    display: flex;
+    flex-direction: row;
+    margin: 20px auto;
+    max-width: 960px;
+    overflow: hidden;
+    padding: 12px;
+    width: 90%;
+}
+
+li.torrent div {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+li.torrent span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+li.torrent.downloading .torrent-meta {
+    color: var(--blue);
+}
+
+li.torrent.downloaded .torrent-meta  {
+    color: var(--green);
+}
+
+li.torrent.stopped .torrent-meta  {
+    color: var(--purple);
+}
+
+li.torrent.error .torrent-meta  {
+    color: var(--red);
+}
+
+li.torrent {
+    border: 2px solid transparent;
+}
+
+li.torrent.selected {
+    border: 2px solid var(--foreground);
+}
+
+li.torrent .torrent-info {
+    flex: 1;
+    line-height: 1.4rem;
+}
+
+li.torrent .torrent-name {
+    /* font-family: 'Montserrat'; */
+    font-size: 18px;
+    font-weight: bold;
+    padding: 2px 0;
+}
+
+li.torrent .torrent-meta {
+    font-size: 14px;
+    padding: 2px 0;
+}
+
+li.torrent button {
+    background: transparent;
+    border: none;
+    border-radius: 24px;
+    outline: none;
+    padding: 8px;
+    transition-duration: .25s;
+}
+
+li.torrent button:hover {
+    background: #80808040;
+}
+
+li.torrent button svg {
+    display: block;
+    fill: #22223b;
+    height: 24px;
+    width: 24px;
+}
+
+.card {
+    background: var(--card-background);
+    box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.win32 .options:hover {
+    background: #4FC3F7;
+}
+
+.win32 .minimize:hover {
+    background: #FDD835;
+}
+
+.win32 .maximize:hover, .unmaximize:hover {
+    background: #00E676;
+}
+
+.win32 .close:hover {
+    background: #FF5252;
+}
+
+.win32.dark .options:hover {
+    background: #039BE5;
+}
+
+.win32.dark .minimize:hover {
+    background: #F9A825;
+}
+
+.win32.dark .maximize:hover, .dark .unmaximize:hover {
+    background: #4CAF50;
+}
+
+.win32.dark .close:hover {
+    background: #F44336;
+}
+
+#message {
+    /* font-family: 'Montserrat'; */
+    font-size: 20px;
+    font-weight: bold;
+    padding: 40px;
+    text-align: center;
+}
