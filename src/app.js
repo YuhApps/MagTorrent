@@ -2,12 +2,12 @@ const { app, BrowserWindow, clipboard, Menu, nativeTheme, dialog, ipcMain, Notif
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
+const soundPlay = require('sound-play')
 
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
 const sampleItems = [sintel]
 
 let webTorrentClient
-let downloadPath
 let mainWindow
 let interval
 let deepLinkUrl
@@ -17,7 +17,7 @@ if (app.requestSingleInstanceLock()) {
     app.on('second-instance', (e, argv, workingDir, data) => {
         let url = argv.pop()
         if (app.isReady() && webTorrentClient && url) {
-            webTorrentClient.add(url, { path: downloadPath })
+            webTorrentClient.add(url, { path: settings['download_path'] })
         } else {
             deepLinkUrl = url
         }
@@ -33,13 +33,11 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     } else {
         settings = {
             'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
-            'torrent_done_notification': 'silent',
-            'torrent_done_sound': true,
+            'on_torrent_done': 'mag_sound', // ['nothing', 'mag_sound', 'mag_notification', 'system_notification', 'silent notification']
         }
     }
-    downloadPath = settings['download_path']
-    if (fs.existsSync(downloadPath) === false) {
-        fs.mkdirSync(downloadPath)
+    if (fs.existsSync(settings['download_path']) === false) {
+        fs.mkdirSync(settings['download_path'])
     }
     if (fs.existsSync(path.join(app.getPath('userData'), 'History.json'))) {
         let torrentJson = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'History.json')))
@@ -55,7 +53,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
             }
         })
         if (deepLinkUrl) {
-            webTorrentClient.add(deepLinkUrl, { path: downloadPath })
+            webTorrentClient.add(deepLinkUrl, { path: settings['download_path'] })
             deepLinkUrl = undefined
         }
     }
@@ -68,7 +66,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
 
 app.on('open-url', (e, url) => {
     if (app.isReady()) {
-        webTorrentClient.add(url, { path: downloadPath })
+        webTorrentClient.add(url, { path: settings['download_path'] })
     } else {
         deepLinkUrl = url
     }
@@ -78,8 +76,10 @@ app.on('window-all-closed', () => {
     finish()
 })
 
+/** IPC events sent by ipcRenderer from {@link {view/index.html}} */
+
 ipcMain.on('add-torrent', (e, magnetURI) => {
-    webTorrentClient.add(magnetURI, { path: downloadPath })
+    webTorrentClient.add(magnetURI, { path: settings['download_path'] })
     mainWindow.webContents.send('adding-torrent')
 })
 
@@ -92,10 +92,10 @@ ipcMain.on('show-torrent-options', (e, torrent, point) => {
 })
 
 ipcMain.on('open-downloads-folder', (e) => {
-    if (fs.existsSync(downloadPath) === false) {
-        fs.mkdirSync(downloadPath)
+    if (fs.existsSync(settings['download_path']) === false) {
+        fs.mkdirSync(settings['download_path'])
     }
-    shell.openPath(downloadPath)
+    shell.openPath(settings['download_path'])
 })
 
 ipcMain.on('open-torrent', (e, torrent) => {
@@ -110,6 +110,14 @@ ipcMain.on('open-torrent', (e, torrent) => {
     }
 })
 
+ipcMain.on('file-dropped', (e, files) => {
+    if (files.length === 0) return
+    for (let f of files) {
+        webTorrentClient.add(f, { path: settings['download_path'] })
+    }
+    mainWindow.webContents.send('adding-torrent')
+})
+
 ipcMain.on('minimize:main-window', () => mainWindow.minimize())
 
 ipcMain.on('maximize:main-window', () => mainWindow.maximize())
@@ -118,6 +126,15 @@ ipcMain.on('unmaximize:main-window', () => mainWindow.unmaximize())
 
 ipcMain.on('close:main-window', () => mainWindow.close())
 
+/** End of IPC events */
+
+/**
+ * Dynamically import WebTorrent module. Because it's an ESM, we need to import it using Promise.
+ * ASAR packaging must be disabled.
+ * The comment in the function is reserved.
+ * @param app Electron app
+ * @returns The "WebTorrent" module
+ */
 function importWebTorrent(app) {
     // app.isPackaged ? '../app.asar.unpacked/node_modules/webtorrent/index.js' : 
     return import('webtorrent')
@@ -137,8 +154,41 @@ function finish() {
     webTorrentClient.destroy((error) => app.quit())
 }
 
+function createOnTorrentDoneMenu() {
+    /*{
+        label: 'Do nothing',
+        type: 'radio',
+        checked: settings['on_torrent_done'] === 'nothing',
+        click: (item) => {
+            settings['on_torrent_done'] = 'nothing'
+            item.checked = true
+        }
+    }*/
+    return [
+        { label: 'Do nothing', value: 'nothing' },
+        { label: 'Play Mag sound', value: 'mag_sound' },
+        { label: 'Show notification with Mag sound', value: 'mag_notification' },
+        { label: 'Show notification with System sound', value: 'system_notification' },
+        { label: 'Show Silent notification', value: 'silent_notification' },
+    ].map(({ label, value }) => ({
+        label: label,
+        type: 'radio',
+        checked: settings['on_torrent_done'] === value,
+        click: (item) => {
+            settings['on_torrent_done'] = value
+            item.checked = true
+            if (value.indexOf('mag') > -1) soundPlay.play(path.join(__dirname, 'assets', 'done.wav'))
+        }
+    }))
+}
+
+/**
+ * Create the Application menu on Mac and disable the menu on Windows and Linux.
+ * On those platform, a popup menu triggered by in-app Options button will be used.
+ * @see createAppOptionsMenu right below.
+ */
 function createAppMenu() {
-    let menu = process.platform !== 'darwin' ? null : Menu.buildFromTemplate([        {
+    let menu = process.platform !== 'darwin' ? null : Menu.buildFromTemplate([{
             label: 'MagTorrent',
             submenu: [
                 {
@@ -149,6 +199,10 @@ function createAppMenu() {
                 {
                     label: 'Set Download folder',
                     click: setDownloadFolder,
+                },
+                {
+                    label: 'On Torrent done', // on_torrent_done torrent_done_sound
+                    submenu: createOnTorrentDoneMenu()
                 },
                 { type: 'separator' },
                 { role: 'services' },
@@ -189,6 +243,12 @@ function createAppMenu() {
     Menu.setApplicationMenu(menu)
 }
 
+/**
+ * Create the "Application" menu for Windows and Linux.
+ * See `function showAppOptionsMenu(button)` in `view/index.html`.
+ * @param point The top left point of the in-app Options menu.
+ * For the Mac app menu, @see createAppMenu right above.
+ */
 function createAppOptionsMenu(point) {
     let menu = Menu.buildFromTemplate([
         {
@@ -214,6 +274,10 @@ function createAppOptionsMenu(point) {
             click: setDownloadFolder,
         },
         {
+            label: 'On Torrent done', // on_torrent_done torrent_done_sound
+            submenu: createOnTorrentDoneMenu()
+        },
+        {
             type: 'separator'
         },
         {
@@ -224,6 +288,11 @@ function createAppOptionsMenu(point) {
     menu.popup(point)
 }
 
+/**
+ * Triggered when user makes a right click on a torrent.
+ * @param infoHash The info hash of the torrent.
+ * @param point The point of the cursor.
+ */
 function createTorrentOptionsMenu({ infoHash }, point) {
     webTorrentClient.get(infoHash).then((torrent) => {
         let torrentPath = path.join(torrent.path, torrent.name)
@@ -231,16 +300,15 @@ function createTorrentOptionsMenu({ infoHash }, point) {
         let menu =  Menu.buildFromTemplate(
         torrent !== null ? [
             {
-                label: doesTorrentExist ? 'Show in Finder' : 'Restart torrent',
+                label: doesTorrentExist ? 'Show in ' + (process.platform === 'darwin' ? 'Finder' : 'Files') : 'Restart torrent',
                 click: () => {
                     if (doesTorrentExist) {
-                        let fn = fs.lstatSync(torrentPath).isDirectory() ? shell.openPath : shell.showItemInFolder
-                        fn(torrentPath)
+                        shell.showItemInFolder(torrentPath)
                     } else {
                         let magnetURI = torrent.magnetURI
                         torrent.destroy()
                         mainWindow.webContents.send('remove-torrent', torrent.infoHash)
-                        webTorrentClient.add(magnetURI, { path: downloadPath })
+                        webTorrentClient.add(magnetURI, { path: settings['download_path'] })
                     }
                 }
             },
@@ -296,8 +364,11 @@ function createTorrentOptionsMenu({ infoHash }, point) {
     })
 }
 
+/**
+ * Create the main (and the only, for now) window, the entry point of the UI.
+ */
 function createMainWindow() {
-    let platform = process.platform
+    let platform = process.platform // See `if (os.platform() === 'darwin' && platform !== 'darwin')` below
     let dark = nativeTheme.shouldUseDarkColors
     mainWindow = new BrowserWindow({
         backgroundColor: dark ? (platform === 'darwin' ? '#202020' : '#00000') : '#FFFFFF',
@@ -306,7 +377,8 @@ function createMainWindow() {
         minWidth: 600,
         width: 800,
         fullscreenable: false,
-        titleBarStyle: 'hiddenInset',
+        frame: platform === 'linux',
+        titleBarStyle: platform === 'linux' ? 'default' : platform === 'darwin' ? 'hiddenInset' : 'hidden',
         webPreferences: {
             contextIsolation: false,
             nodeIntegration: true,
@@ -317,7 +389,10 @@ function createMainWindow() {
         mainWindow.setWindowButtonPosition({ x: 12, y: 16 })
     }
     if (os.platform() === 'darwin' && platform !== 'darwin') {
-        mainWindow.setWindowButtonVisibility(false)
+        // This method is convenient for developers to test behaviors of Windows and Linux on Mac.
+        // Simply set platform = 'win32' or 'linux', and the window will disable the traffic light buttons.
+        // Thus it will behave like it's on Windows or Linux.
+        mainWindow.setWindowButtonVisibility(platform === 'linux')
     }
     mainWindow.loadFile('src/view/index.html')
     mainWindow.webContents.on('did-finish-load', () => {
@@ -353,24 +428,32 @@ function createMainWindow() {
 }
 
 function showAboutDialog(menuItem, browserWindow, event) {
-    const build_date = '2023'
+    const build_date = '2023.08.01'
     dialog.showMessageBox({
         message: 'MagTorrent',
-        detail: 'Version ' + app.getVersion() + ' (' + build_date + ')\nDeveloped by YUH APPS'
-    })
+        detail: 'Version ' + app.getVersion() + ' (' + build_date + ')\nDeveloped by YUH APPS',
+        buttons: ['OK & Close', 'YUH APPS website'],
+        defaultId: 0,
+    }).then(({ response }) => { if (response === 1) shell.openExternal('https://yuhapps.dev')})
 }
 
 function addTorrentFromFile(menuItem, browserWindow, event) {
-
+    dialog.showOpenDialog({
+        defaultPath: app.getPath('downloads'),
+        filters: [{ name: 'torrent', extensions: ['torrent']}]
+    }).then(({ canceled, filePaths }) => {
+        if (canceled || filePaths.length === 0) return
+        webTorrentClient.add(filePaths[0], { path: settings['download_path'] })
+    })
 }
 
 function setDownloadFolder(menuItem, browserWindow, event) {
     dialog.showOpenDialog(browserWindow, {
-        defaultPath: downloadPath,
+        defaultPath: settings['download_path'],
         properties: ['createDirectory', 'openDirectory']
     }).then(({ canceled, filePaths }) => {
         if (canceled || filePaths.length === 0) return
-        downloadPath = filePaths[0]
+        settings['download_path'] = filePaths[0]
     })
 }
 
@@ -379,7 +462,7 @@ function startAllTransfers(menuItem, browserWindow, event) {
         if (fs.existsSync(path.join(torrent.path, torrent.name)) === false) {
             let magnetURI = torrent.magnetURI
             torrent.destroy()
-            webTorrentClient.add(magnetURI, { path: downloadPath })
+            webTorrentClient.add(magnetURI, { path: settings['download_path'] })
         } else if (torrent.paused) {
             torrent.resume()
         }
@@ -422,9 +505,24 @@ function updateTorrents() {
 }
 
 function onTorrent(torrent) {
+    /*
+    settings = {
+        'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
+        'on_torrent_done': 'silent' | 'mag' | 'system',
+        'torrent_done_sound': true,
+    }
+    */
     if (torrent.source === 'history') return
     torrent.on('done', () => {
-        new Notification({ title: `${torrent.name} has been downloaded`, silent: true }).show()
+        let s = settings['on_torrent_done']
+        if (s === 'nothing') return
+        if (s.startsWith('mag')) soundPlay.play(path.join(__dirname, 'assets', 'done.wav'))
+        if (s.endsWith('_notification')) {
+            new Notification({
+                title: `${torrent.name} has been downloaded`,
+                silent: s !== 'system_notification'
+            }).show()
+        }
         mainWindow.webContents.send('torrent-done', torrent.infoHash, torrent.length)
     })
 }

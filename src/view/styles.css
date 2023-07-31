@@ -1,3 +1,11 @@
+/***
+    You may be wondering why the scripts of index.html is written directly into the file itself, while styles are written here.
+    The reason is I was initially planning to have more than one windows, for example, a Preferences one. However in the final
+    stage, the plan was cancelled because I just want to keep things as much simple as possible. Therefore all settings other
+    than 'Set Downloads folder' and 'On Torrent done' are not implemented (yet), such as speed limits. Still, the stylesheet
+    is not merged because I might add a Preferences/Settings window later, or something else.
+*/
+
 @font-face {
     font-family: 'Lato';
     font-weight: normal;
@@ -231,6 +239,18 @@ li.torrent button svg {
 }
 
 .hidden {
+    display: none !important;
+}
+
+.darwin .hide-on-darwin {
+    display: none !important;
+}
+
+.linux .hide-on-linux {
+    display: none !important;
+}
+
+.win32 .hide-on-win32 {
     display: none !important;
 }
 

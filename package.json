@@ -2,7 +2,7 @@
   "name": "magtorrent",
   "productName": "MagTorrent",
   "version": "0.0.1",
-  "description": "A torrent app for Desktop, based on WebTorrent and Electron.",
+  "description": "A torrent app for Desktop, powered by WebTorrent and Electron.",
   "main": "src/app.js",
   "scripts": {
     "start": "electron ."
@@ -27,6 +27,7 @@
     ]
   },
   "dependencies": {
+    "sound-play": "^1.1.0",
     "webtorrent": "^2.1.15"
   },
   "devDependencies": {

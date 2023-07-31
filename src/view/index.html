@@ -6,7 +6,7 @@
     <title>MagTorrent</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="hidden">
     <header class="card">
         <button class="options hide-on-darwin" onclick="showAppOptionsMenu(this)" title="Options">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m11.998 2c5.517 0 9.997 4.48 9.997 9.998 0 5.517-4.48 9.997-9.997 9.997-5.518 0-9.998-4.48-9.998-9.997 0-5.518 4.48-9.998 9.998-9.998zm0 1.5c-4.69 0-8.498 3.808-8.498 8.498s3.808 8.497 8.498 8.497 8.497-3.807 8.497-8.497-3.807-8.498-8.497-8.498zm2.502 8.495c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25zm-3.75 0c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25zm-3.75 0c0-.69.56-1.25 1.25-1.25s1.25.56 1.25 1.25-.56 1.25-1.25 1.25-1.25-.56-1.25-1.25z"/></svg>
@@ -136,6 +136,21 @@
             }
         })
 
+        document.addEventListener('drop', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            let files = []
+            for (const f of event.dataTransfer.files) {
+                if (f.name.endsWith('.torrent')) files.push(f.path)
+            }
+            ipcRenderer.send('file-dropped', files)
+        })
+        
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+        })
+
         searchBox.onkeyup = (e) => {
             let text = e.target.value
             if (text.startsWith('magnet:?xt=urn:btih:')) {
@@ -148,13 +163,9 @@
 
         ipcRenderer.on('platform', (e, platform, dark) => {
             searchBox.placeholder += `Use ${platform === 'darwin' ? 'Cmd' : 'Ctrl'}+V to paste.`
+            document.body.classList[dark ? 'add' : 'remove']('dark')
             document.body.classList.add(platform)
-            document.querySelectorAll('.hide-on-' + platform).forEach((el) => el.classList.add('hidden'))
-            if (dark) {
-                document.body.classList.add('dark')
-            } else {
-                document.body.classList.remove('dark')
-            }
+            document.body.classList.remove('hidden')
         })
 
         ipcRenderer.on('options-menu-closed', (e) => {
@@ -200,7 +211,7 @@
                 message.classList.remove('hidden')
                 message.innerHTML = `There are no active transfers.<br>
                                     To add a torrent, paste a magnet link to the<br>
-                                    search box above, or add a .torrent file.`
+                                    search box above, or drag a .torrent file into this window.`
             } else {
                 message.classList.add('hidden')
             }
