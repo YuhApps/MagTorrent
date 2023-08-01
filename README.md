@@ -5,7 +5,7 @@ MagTorrent is a torrent app for Windows, Mac and Linux powered by [WebTorrent](h
 * Modern versions of **NodeJS, WebTorrent, and Electron**.
 * WebTorrent is used in the backend, which is the Electron main process, not the Electron renderer (the browser) process.
 * Just a torrent client with no other purposes than downloading and seeding. No PDF preview, no video playback. Each desktop platform has great apps for those purposes, so it's unnecessary for MagTorrent to take care of that part.
-* Surprisingly simple code in the frontend with pure HTML, CSS and JS. No React, no Angular, no Vue, no Svelte. Therefore it puts less CPU usage and Memory resource on end-users' computers, and every developer does not take much time to understand the code.
+* Surprisingly simple code in the frontend with pure HTML, CSS and JS. No React, no Angular, no Vue, no Svelte. Therefore it puts less stress on CPU usage and Memory resources on end-users' computers, and every developer does not take much time to understand the code.
 * Further more, when there are new versions of WebTorrent and Electron but MagTorrent is not updated, you as a developer can just fork this project, update the dependencies and you'll have a good chance to have your own working MagTorrent app.
 * It just works!!!
 

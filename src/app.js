@@ -164,15 +164,6 @@ function finish() {
 }
 
 function createOnTorrentDoneMenu() {
-    /*{
-        label: 'Do nothing',
-        type: 'radio',
-        checked: settings['on_torrent_done'] === 'nothing',
-        click: (item) => {
-            settings['on_torrent_done'] = 'nothing'
-            item.checked = true
-        }
-    }*/
     return [
         { label: 'Do nothing', value: 'nothing' },
         { label: 'Play Mag sound', value: 'mag_sound' },
@@ -193,7 +184,7 @@ function createOnTorrentDoneMenu() {
 
 /**
  * Create the Application menu on Mac and disable the menu on Windows and Linux.
- * On those platform, a popup menu triggered by in-app Options button will be used.
+ * On those platforms, a popup menu triggered by in-app Options button will be used.
  * @see createAppOptionsMenu right below.
  */
 function createAppMenu() {
@@ -518,13 +509,6 @@ function updateTorrents() {
 }
 
 function onTorrent(torrent) {
-    /*
-    settings = {
-        'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
-        'on_torrent_done': 'silent' | 'mag' | 'system',
-        'torrent_done_sound': true,
-    }
-    */
     if (torrent.source === 'history') return
     torrent.on('done', () => {
         let s = settings['on_torrent_done']
