@@ -1,7 +1,7 @@
 {
   "name": "magtorrent",
   "productName": "MagTorrent",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A torrent app for Desktop, powered by WebTorrent and Electron.",
   "main": "src/app.js",
   "scripts": {
@@ -12,10 +12,11 @@
     "torrent",
     "webtorrent"
   ],
-  "author": "Yuh Apps",
+  "author": "Yuh Apps <yuhapps@gmail.com>",
   "license": "ISC",
   "build": {
     "appId": "dev.yuhapps.magtorrent",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "asar": false,
     "protocols": [
       {
@@ -28,12 +29,13 @@
   },
   "dependencies": {
     "electron-fetch": "^1.9.1",
+    "electron-updater": "^6.1.1",
     "sound-play": "^1.1.0",
     "webtorrent": "^2.1.15"
   },
   "devDependencies": {
     "electron": "^25.3.2",
-    "electron-builder": "^23.6.0"
+    "electron-builder": "^24.6.3"
   },
   "postinstall": "electron-builder install-app-deps"
 }

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, clipboard, Menu, nativeTheme, dialog, ipcMain, Notification, shell } = require('electron')
 const fetch = require('electron-fetch').default
+const { autoUpdater } = require('electron-updater')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
@@ -69,7 +70,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     if (app.isDefaultProtocolClient('magnet')) {
         app.setAsDefaultProtocolClient('magnet')
     }
-    checkForUpdate(Date.now())
+    autoUpdater.checkForUpdatesAndNotify()
 })
 
 app.on('open-url', (e, url) => {
@@ -149,12 +150,12 @@ function importWebTorrent(app) {
 }
 
 function finish() {
-    if (interval) clearInterval(interval)
     let torrents = webTorrentClient.torrents.map((torrent) => ({
         name: torrent.name,
         infoHash: torrent.infoHash,
         magnetURI: torrent.magnetURI,
         paused: torrent.paused,
+        done: torrent.done,
         path: torrent.path
     }))
     fs.writeFileSync(path.join(app.getPath('userData'), 'History.json'), JSON.stringify(torrents))
@@ -432,6 +433,7 @@ function createMainWindow() {
                     break
             }
         }
+        if (interval) clearInterval(interval)
     })
 }
 
