@@ -325,7 +325,7 @@ function createTorrentOptionsMenu({ infoHash }, point) {
                 type: 'separator'
             },
             {
-                label: torrent.paused ? 'Resume transfer' : 'Stop transfer',
+                label: torrent.paused ? 'Resume transfer' : 'Pause transfer',
                 enabled: doesTorrentExist,
                 click: () => {
                     if (torrent.paused) {
@@ -339,16 +339,18 @@ function createTorrentOptionsMenu({ infoHash }, point) {
             },
             {
                 label: 'Stop and delete from list',
-                click: () => {
-                    torrent.destroy()
-                    mainWindow.webContents.send('remove-torrent', torrent.infoHash)
-                }
+                click: () => torrent.destroy(() => mainWindow.webContents.send('remove-torrent', torrent.infoHash))
             },
             {
                 label: 'Delete torrent and files',
                 click: () => {
-                    torrent.destroy(() => fs.rmSync(path.join(torrent.path, torrent.name), { recursive: true }))
-                    mainWindow.webContents.send('remove-torrent', torrent.infoHash)
+                    torrent.destroy(() => {
+                        let p = path.join(torrent.path, torrent.name)
+                        if (fs.existsSync(p)) {
+                            fs.rmSync(p, { recursive: true })
+                        }
+                        mainWindow.webContents.send('remove-torrent', torrent.infoHash)
+                    })
                 }
             },
             {
@@ -469,6 +471,7 @@ function setDownloadFolder(menuItem, browserWindow, event) {
 
 function startAllTransfers(menuItem, browserWindow, event) {
     webTorrentClient.torrents.forEach((torrent) => {
+        if (Boolean(torrent.name) === false) return
         if (fs.existsSync(path.join(torrent.path, torrent.name)) === false) {
             let magnetURI = torrent.magnetURI
             torrent.destroy()
