@@ -9,6 +9,10 @@ MagTorrent is a torrent app for Windows, Mac and Linux powered by [WebTorrent](h
 * Further more, when there are new versions of WebTorrent and Electron but MagTorrent is not updated, you as a developer can just fork this project, update the dependencies and you'll have a good chance to have your own working MagTorrent app.
 * It just works!!!
 
+**Screenshot on Mac**
+
+![Screenshot](screenshot.png)
+
 **You can download installer for your desktop platform from [here](https://github.com/YuhApps/MagTorrent/releases).**
 
 **How to build and run the app on your computer, assuming you have Git and NodeJS installed:**
