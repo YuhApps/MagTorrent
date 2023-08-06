@@ -5,7 +5,8 @@
   "description": "A torrent app for Desktop, powered by WebTorrent and Electron.",
   "main": "src/app.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder -m -w nsis zip -l deb tar.xz"
   },
   "keywords": [
     "magnet",
@@ -42,9 +43,8 @@
   },
   "devDependencies": {
     "@electron/notarize": "^2.1.0",
-    "electron": "^25.3.2",
-    "electron-builder": "^24.6.3",
-    "electron-builder-notarize": "^1.5.1"
+    "electron": "^25.4.0",
+    "electron-builder": "^24.6.3"
   },
   "postinstall": "electron-builder install-app-deps"
 }
