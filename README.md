@@ -1,6 +1,6 @@
 # MAGTORRENT: A torrent app for Desktop platforms.
 
-MagTorrent is a torrent app for Windows, Mac and Linux powered by [WebTorrent](https://github.com/webtorrent/webtorrent) and [Electron](https://github.com/electron/electron). The goal of this projects is to build a simple open source torrent application for desktop platforms with these ideas:
+MagTorrent is a torrent app for Windows, Mac and Linux powered by [WebTorrent](https://github.com/webtorrent/webtorrent) and [Electron](https://github.com/electron/electron). The goal of this project is to build a simple open source torrent application for desktop platforms with these ideas:
 
 * Modern versions of **NodeJS, WebTorrent, and Electron**.
 * WebTorrent is used in the backend, which is the Electron main process, not the Electron renderer (the browser) process.

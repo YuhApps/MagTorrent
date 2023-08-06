@@ -1,7 +1,7 @@
 {
   "name": "magtorrent",
   "productName": "MagTorrent",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A torrent app for Desktop, powered by WebTorrent and Electron.",
   "main": "src/app.js",
   "scripts": {
@@ -19,6 +19,12 @@
     "afterSign": "./notarize.js",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "asar": false,
+    "mac": {
+      "notarize": false
+    },
+    "win": {
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
+    },
     "protocols": [
       {
         "name": "Magnet URL",
@@ -35,8 +41,10 @@
     "webtorrent": "^2.1.15"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.1.0",
     "electron": "^25.3.2",
-    "electron-builder": "^24.6.3"
+    "electron-builder": "^24.6.3",
+    "electron-builder-notarize": "^1.5.1"
   },
   "postinstall": "electron-builder install-app-deps"
 }

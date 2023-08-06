@@ -13,6 +13,7 @@ exports.default = async function notarizing(context) {
   const appPath = path.normalize(path.join(context.appOutDir, `${appName}.app`))
   const appleId = process.env.APPLE_ID
   const appleIdPassword = process.env.APPLE_ID_PASSWORD
+  const teamId = process.env.APPLE_TEAM_ID
   if (!appleId) {
     console.warn("Not notarizing: Missing APPLE_ID environment variable")
     return
@@ -22,9 +23,11 @@ exports.default = async function notarizing(context) {
     return
   }
   return notarize({
+    tool: 'notarytool',
     appBundleId,
     appPath,
     appleId,
     appleIdPassword,
+    teamId
   })
 }

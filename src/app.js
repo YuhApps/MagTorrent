@@ -25,6 +25,8 @@ if (app.requestSingleInstanceLock()) {
             deepLinkUrl = url
         }
     })
+} else {
+    app.quit()
 }
 
 app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
@@ -67,7 +69,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     }
     createAppMenu()
     createMainWindow()
-    if (app.isDefaultProtocolClient('magnet')) {
+    if (app.isDefaultProtocolClient('magnet') === false) {
         app.setAsDefaultProtocolClient('magnet')
     }
     autoUpdater.checkForUpdatesAndNotify()

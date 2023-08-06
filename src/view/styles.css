@@ -36,6 +36,7 @@ html {
 
 body {
     color: #000000;
+    color-scheme: light;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -54,6 +55,7 @@ body {
 
 body.dark {
     color: #FFFFFF;
+    color-scheme: dark;
     --red: #EF9A9A;
     --yellow: #FFF59D;
     --green: #A5D6A7;
@@ -143,7 +145,6 @@ main {
 ul {
     list-style: none;
     margin: 0;
-    overflow-y: scroll;
     padding: 0;
 }
 
