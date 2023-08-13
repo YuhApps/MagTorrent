@@ -128,6 +128,7 @@
             ipcRenderer.send('close:main-window')
         }
 
+        /*
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
             if (event.matches) {
                 document.body.classList.add('dark')
@@ -135,6 +136,7 @@
                 document.body.classList.remove('dark')
             }
         })
+        */
 
         document.addEventListener('drop', (event) => {
             event.preventDefault()

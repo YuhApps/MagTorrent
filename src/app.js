@@ -8,7 +8,7 @@ const soundPlay = require('sound-play')
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
 const sampleItems = [sintel]
 
-const VERSION_CODE = 1
+const build_date = '2023.08.13'
 
 let webTorrentClient
 let mainWindow
@@ -37,6 +37,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
         settings = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'Settings.json')))
     } else {
         settings = {
+            'appearance': 'system',
             'download_path': path.join(app.getPath('downloads'), 'MagTorrent'),
             'last_cfu': 0,
             'new_version': {
@@ -85,6 +86,12 @@ app.on('open-url', (e, url) => {
 
 app.on('window-all-closed', () => {
     finish()
+})
+
+nativeTheme.addListener('updated', (e) => {
+    if (nativeTheme.themeSource === 'system') {
+        mainWindow.webContents.send('platform', process.platform, nativeTheme.shouldUseDarkColors)
+    }
 })
 
 /** IPC events sent by ipcRenderer from {@link {view/index.html}} */
@@ -160,9 +167,28 @@ function finish() {
         done: torrent.done,
         path: torrent.path
     }))
+    settings['appearance'] = nativeTheme.themeSource
     fs.writeFileSync(path.join(app.getPath('userData'), 'History.json'), JSON.stringify(torrents))
     fs.writeFileSync(path.join(app.getPath('userData'), 'Settings.json'), JSON.stringify(settings))
     webTorrentClient.destroy((error) => app.quit())
+}
+
+function createAppearanceMenu() {
+    return [
+        { label: 'System', value: 'system' },
+        { label: 'Light', value: 'light' },
+        { label: 'Dark', value: 'dark' },
+    ].map(({ label, value }) => ({
+        label: label,
+        type: 'radio',
+        checked: settings['appearance'] === value,
+        click: (item) => {
+            nativeTheme.themeSource = value
+            settings['appearance'] = value
+            item.checked = true
+            mainWindow.webContents.send('platform', process.platform, nativeTheme.shouldUseDarkColors)
+        }
+    }))
 }
 
 function createOnTorrentDoneMenu() {
@@ -199,12 +225,16 @@ function createAppMenu() {
                 },
                 { type: 'separator' },
                 {
-                    label: 'Set Download folder',
-                    click: setDownloadFolder,
+                    label: 'Appearance',
+                    submenu: createAppearanceMenu(),
                 },
                 {
                     label: 'On Torrent done', // on_torrent_done torrent_done_sound
                     submenu: createOnTorrentDoneMenu()
+                },
+                {
+                    label: 'Set Download folder',
+                    click: setDownloadFolder,
                 },
                 { type: 'separator' },
                 { role: 'services' },
@@ -272,12 +302,16 @@ function createAppOptionsMenu(point) {
             type: 'separator'
         },
         {
-            label: 'Set Download folder',
-            click: setDownloadFolder,
+            label: 'Appearance',
+            submenu: createAppearanceMenu(),
         },
         {
             label: 'On Torrent done', // on_torrent_done torrent_done_sound
             submenu: createOnTorrentDoneMenu()
+        },
+        {
+            label: 'Set Download folder',
+            click: setDownloadFolder,
         },
         {
             type: 'separator'
@@ -372,6 +406,7 @@ function createTorrentOptionsMenu({ infoHash }, point) {
  * Create the main (and the only, for now) window, the entry point of the UI.
  */
 function createMainWindow() {
+    nativeTheme.themeSource = settings['appearance'] || 'system'
     let platform = process.platform // See `if (os.platform() === 'darwin' && platform !== 'darwin')` below
     let dark = nativeTheme.shouldUseDarkColors
     mainWindow = new BrowserWindow({
@@ -433,7 +468,6 @@ function createMainWindow() {
 }
 
 function showAboutDialog(menuItem, browserWindow, event) {
-    const build_date = '2023.08.01'
     dialog.showMessageBox({
         message: 'MagTorrent',
         detail: 'Version ' + app.getVersion() + ' (' + build_date + ')\nDeveloped by YUH APPS',
