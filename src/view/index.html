@@ -164,7 +164,9 @@
         }
 
         ipcRenderer.on('platform', (e, platform, dark) => {
-            searchBox.placeholder += `Use ${platform === 'darwin' ? 'Cmd' : 'Ctrl'}+V to paste.`
+            if (searchBox.placeholder.endsWith('paste.') === false) {
+                searchBox.placeholder += `Use ${platform === 'darwin' ? 'Cmd' : 'Ctrl'}+V to paste.`
+            }
             document.body.classList[dark ? 'add' : 'remove']('dark')
             document.body.classList.add(platform)
             document.body.classList.remove('hidden')

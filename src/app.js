@@ -1,16 +1,16 @@
 const { app, BrowserWindow, clipboard, Menu, nativeTheme, dialog, ipcMain, Notification, shell } = require('electron')
-const fetch = require('electron-fetch').default
 const { autoUpdater } = require('electron-updater')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const soundPlay = require('sound-play')
+
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
 const sampleItems = [sintel]
 
-const build_date = '2023.08.13'
+const build_date = '2023.09.01'
 
-let webTorrentClient
+let webTorrentClient, moveToTrash
 let mainWindow
 let interval
 let deepLinkUrl
@@ -29,10 +29,11 @@ if (app.requestSingleInstanceLock()) {
     app.quit()
 }
 
-app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
+app.whenReady().then(() => Promise.all([import('webtorrent'), import('trash')])).then(([WebTorrent, trash]) => {
     webTorrentClient = new WebTorrent.default()
     webTorrentClient.on('torrent', onTorrent)
     webTorrentClient.on('error', onError)
+    moveToTrash = trash.default
     if (fs.existsSync(path.join(app.getPath('userData'), 'Settings.json'))) {
         settings = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'Settings.json')))
     } else {
@@ -70,7 +71,7 @@ app.whenReady().then(() => importWebTorrent(app)).then((WebTorrent) => {
     }
     createAppMenu()
     createMainWindow()
-    if (app.isDefaultProtocolClient('magnet') === false) {
+    if (app.isDefaultProtocolClient('magnet') === false && app.isPackaged) {
         app.setAsDefaultProtocolClient('magnet')
     }
     autoUpdater.checkForUpdatesAndNotify()
@@ -369,7 +370,19 @@ function createTorrentOptionsMenu({ infoHash }, point) {
                 click: () => torrent.destroy(() => mainWindow.webContents.send('remove-torrent', torrent.infoHash))
             },
             {
-                label: 'Delete torrent and files',
+                label: 'Delete torrent and move its files to ' + (process.platform === 'win32' ? 'Recycle Bin' : 'Trash'),
+                click: () => {
+                    torrent.destroy(() => {
+                        let p = path.join(torrent.path, torrent.name)
+                        if (fs.existsSync(p)) {
+                            moveToTrash(p)
+                        }
+                        mainWindow.webContents.send('remove-torrent', torrent.infoHash)
+                    })
+                }
+            },
+            {
+                label: 'Delete torrent and remove its files permanently',
                 click: () => {
                     torrent.destroy(() => {
                         let p = path.join(torrent.path, torrent.name)

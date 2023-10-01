@@ -1,12 +1,12 @@
 {
   "name": "magtorrent",
   "productName": "MagTorrent",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A torrent app for Desktop, powered by WebTorrent and Electron.",
   "main": "src/app.js",
   "scripts": {
     "start": "electron .",
-    "pack-all": "npm run pack-mac && npm run pack-windows && npm run pack-linux",
+    "pack-all": "npm run pack-mac && npm run pack-windows && npm run pack-linux && open dist/",
     "pack-mac": "electron-builder -m --x64 --arm64",
     "pack-linux": "electron-builder -l deb tar.xz --x64",
     "pack-windows": "electron-builder -w nsis zip --x64"
@@ -39,14 +39,14 @@
     ]
   },
   "dependencies": {
-    "electron-fetch": "^1.9.1",
-    "electron-updater": "^6.1.1",
+    "electron-updater": "^6.1.4",
     "sound-play": "^1.1.0",
-    "webtorrent": "^2.1.15"
+    "trash": "^8.1.1",
+    "webtorrent": "^2.1.25"
   },
   "devDependencies": {
     "@electron/notarize": "^2.1.0",
-    "electron": "^25.5.0",
+    "electron": "^25.8.2",
     "electron-builder": "^24.6.3"
   },
   "postinstall": "electron-builder install-app-deps"
