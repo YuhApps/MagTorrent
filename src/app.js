@@ -366,11 +366,11 @@ function createTorrentOptionsMenu({ infoHash }, point) {
                 }
             },
             {
-                label: 'Stop and delete from list',
+                label: 'Remove torrent',
                 click: () => torrent.destroy(() => mainWindow.webContents.send('remove-torrent', torrent.infoHash))
             },
             {
-                label: 'Delete torrent and move its files to ' + (process.platform === 'win32' ? 'Recycle Bin' : 'Trash'),
+                label: 'Move to ' + (process.platform === 'win32' ? 'Recycle Bin' : 'Trash'),
                 click: () => {
                     torrent.destroy(() => {
                         let p = path.join(torrent.path, torrent.name)
@@ -382,7 +382,7 @@ function createTorrentOptionsMenu({ infoHash }, point) {
                 }
             },
             {
-                label: 'Delete torrent and remove its files permanently',
+                label: 'Delete permanently',
                 click: () => {
                     torrent.destroy(() => {
                         let p = path.join(torrent.path, torrent.name)
