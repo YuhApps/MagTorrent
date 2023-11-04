@@ -8,7 +8,7 @@ const soundPlay = require('sound-play')
 const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fsintel.torrent'
 const sampleItems = [sintel]
 
-const build_date = '2023.09.01'
+const build_date = '2023.11.03'
 
 let webTorrentClient, moveToTrash
 let mainWindow
@@ -267,6 +267,21 @@ function createAppMenu() {
                     label: 'Stop all transfers',
                     click: stopAllTransfers
                 },
+                { type: 'separator' },
+                {
+                    label: 'Delete all inactive transfers',
+                    click: (menuItem, browserWindow, event) => {
+                        let torrents = webTorrentClient.torrents
+                        console.log(torrents.length)
+                        torrents.forEach((torrent) => {
+                            if (torrent.paused || torrent.done) {
+                                console.log(p, "Exists")
+                                torrent.destroy(() => mainWindow.webContents.send('remove-torrent', torrent.infoHash))
+                                mainWindow.webContents.send('remove-torrent', torrent.infoHash)
+                            }
+                        })
+                    }
+                },
             ]
         },
         { role: 'editMenu' },
@@ -298,6 +313,21 @@ function createAppOptionsMenu(point) {
         {
             label: 'Stop all transfers',
             click: stopAllTransfers
+        },
+        { type: 'separator' },
+        {
+            label: 'Delete all inactive transfers',
+            click: (menuItem, browserWindow, event) => {
+                let torrents = webTorrentClient.torrents
+                console.log(torrents.length)
+                torrents.forEach((torrent) => {
+                    if (torrent.paused || torrent.done) {
+                        console.log(p, "Exists")
+                        torrent.destroy(() => mainWindow.webContents.send('remove-torrent', torrent.infoHash))
+                        mainWindow.webContents.send('remove-torrent', torrent.infoHash)
+                    }
+                })
+            }
         },
         {
             type: 'separator'
