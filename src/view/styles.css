@@ -26,12 +26,24 @@
 
 @font-face {
     font-family: 'Montserrat';
-    font-weight: normal;
+    font-weight: bold;
     src: URL('../fonts/montserrat_bold.ttf') format('truetype');
 }
 
+@font-face {
+    font-family: 'Nunito';
+    font-weight: normal;
+    src: URL('../fonts/nunito_regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-weight: bold;
+    src: URL('../fonts/nunito_bold.ttf') format('truetype');
+}
+
 html {
-    font-family: 'Lato';
+    font-family: 'Nunito';
 }
 
 body {
